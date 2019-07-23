@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block app_content %}
+    <h1>Sign In</h1>
+    <form action="" method="post" novalidate>
+        {{ form.hidden_tag() }}
+        <p>
+            {{ wtf.form_field(form.username, class='form-control', size=20) }}<br>
+        </p>
+        <p>
+            {{ wtf.form_field(form.password, class='form-control', size=20) }}<br>
+        </p>
+        <p>{{ form.remember_me() }} {{ form.remember_me.label }}</p>
+        <p>{{ form.submit() }}</p>
+        <p>New User? <a href="{{ url_for('register') }}">Click to register!</a> </p>
+
+        <style>
+            .form-group.has-error > .form-control{
+                border-color: red;
+            }
+            .form-group.has-error > .help-block {
+                color:red;
+            }
+        </style>
+
+    </form>
+
+{% endblock %}

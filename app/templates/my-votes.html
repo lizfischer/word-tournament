@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block app_content %}
+
+<table>
+    <h1>My Votes</h1>
+    <p>Total votes: {{ count }}</p>
+    {% for vote in votes %}
+        <tr>
+            <td {%if vote[2] == 0%} class="highlight"{%endif%}>{{vote[0]}}</td>
+            <td {%if vote[2] == 1%} class="highlight"{%endif%}>{{vote[1]}}</td>
+        </tr>
+    {% endfor %}
+    <style>
+        .highlight{
+            background: gold;
+        }
+
+        td {
+            padding: 10px;
+        }
+
+        tr {
+            border: #1b1e21 1px solid;
+        }
+
+    </style>
+</table>
+
+{% endblock %}

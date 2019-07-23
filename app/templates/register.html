@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block app_content %}
+    <h1>Register</h1>
+    <form action="" method="post" novalidate>
+        {{ form.hidden_tag() }}
+        <p>
+            {{ wtf.form_field(form.username, class='form-control') }}<br>
+        </p>
+        <p>
+            {{ wtf.form_field(form.password, class='form-control') }}<br>
+        </p>
+        <p>
+            {{ wtf.form_field(form.password2, class='form-control') }}<br>
+        </p>
+        <p>{{ form.submit() }}</p>
+
+
+        <style>
+            .form-group.has-error > .form-control{
+                border-color: red;
+            }
+            .form-group.has-error > .help-block {
+                color:red;
+            }
+        </style>
+
+    </form>
+
+{% endblock %}

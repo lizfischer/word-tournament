@@ -14,10 +14,11 @@ print("<head>")
 print("<title>Oh hey</title>")
 print("</head>")
 print("<body>")
+
 print("<h2> %s selected these words:</h2>" % name)
 for key in keys:
     if key != "uid":
-        print(form.getvalue(key), "<br>")
+        print(form.getfirst(key), "<br>")
 
 print("</body>")
 print("</html>")
