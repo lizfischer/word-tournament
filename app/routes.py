@@ -65,6 +65,9 @@ def vote():
         flash('Voting is done! The winner is "' + FINAL_WINNER + '"', 'info')
         return render_template('index.html')
 
+    if not current_user.is_authenticated():
+        redirect(url_for('login'))
+
     user_votes = [r for (r,) in Vote.query.with_entities(Vote.match).filter_by(user=current_user.id).all()]
     matches = Match.query.filter_by(finished=0).filter(Match.id.notin_(user_votes)).order_by(Match.round).limit(VOTE_BATCH_SIZE)
 
