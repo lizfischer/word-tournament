@@ -1,6 +1,6 @@
 from flask import render_template, flash, redirect, url_for
 from app import app, db, VOTE_BATCH_SIZE, NUM_ROUNDS
-from flask_login import current_user, login_user, logout_user
+from flask_login import current_user, login_user, logout_user, login_required
 from app.forms import LoginForm, RegistrationForm, VoteForm
 from app.models import User, Match, Vote, Word
 from wtforms import RadioField
@@ -59,14 +59,15 @@ def register():
 
 
 @app.route('/vote', methods=['GET', 'POST'])
+@login_required
 def vote():
+    if not current_user.is_authenticated:
+        redirect(url_for('login'))
+
     global FINAL_WINNER
     if FINAL_WINNER is not None:
         flash('Voting is done! The winner is "' + FINAL_WINNER + '"', 'info')
         return render_template('index.html')
-
-    if not current_user.is_authenticated:
-        redirect(url_for('login'))
 
     user_votes = [r for (r,) in Vote.query.with_entities(Vote.match).filter_by(user=current_user.id).all()]
     matches = Match.query.filter_by(finished=0).filter(Match.id.notin_(user_votes)).order_by(Match.round).limit(VOTE_BATCH_SIZE)
@@ -129,6 +130,7 @@ def vote():
 
 
 @app.route('/myvotes')
+@login_required
 def myvotes():
     user_votes = Vote.query.filter_by(user=current_user.id).all()
     data = []
@@ -142,6 +144,7 @@ def myvotes():
 
 
 @app.route('/tournament')
+@login_required
 def tournament():
     data = {}
     starting_round = NUM_ROUNDS - 1
