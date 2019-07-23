@@ -50,6 +50,8 @@ def init_matches(word_list):
     NUM_WORDS = Word.query.count()
     NUM_ROUNDS = int(math.log(NUM_WORDS, 2))
 
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=8000)
 
 #init_matches(init_data(WORD_LIST))
 #init_matches(TEST_DATA)
