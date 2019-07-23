@@ -27,7 +27,7 @@ class RegistrationForm(FlaskForm):
 class VoteForm(FlaskForm):
     submit = SubmitField('Submit')
 
-    class Meta:
-        def render_field(self, field, render_kw):
-            render_kw.setdefault('required', True)
-            return super().render_field(field, render_kw)
+#    class Meta:
+#        def render_field(self, field, render_kw):
+#            render_kw.setdefault('required', True)
+#            return super().render_field(field, render_kw)
