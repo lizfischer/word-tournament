@@ -9,7 +9,7 @@
 ## Interacting with the database
 We're using Flask's SQLAlchemy package for DB interaction. It abstracts a lot away, handling transactions etc. for you. 
 
-Note: Currently, the db as-is on the master branch has some test users in the db already for use: liz, user2, user3, and user 4. All passwords are 1234.
+Note: Currently, the db as-is on the master branch has some test users already registered for use: liz, user2, user3, and user 4. All passwords are 1234.
 
 I'll use the `Match` table for all my examples here, but you can do the same thing with other tables & column names.
 ### Basic queries
