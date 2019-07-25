@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block scripts %}
+    {{ super() }}
+    <script type="text/javascript" src="{{ url_for('static', filename='js/jquery.bracket.min.js')}}}"></script>
+{% endblock %}
+
+{% block styles %}
+    {{ super() }}
+{% endblock %}
+
+{% block app_content %}
+
+<h1> Tournament Status</h1>
+
+<h2>Quick stats</h2>
+<p>Finished matches: {{finished_matches}}</p>
+<p>Open matches: {{open_matches}}</p>
+<p>Currently working on rounds {{earliest_pending_round}} through {{latest_pending_round}} out of {{total_rounds}}</p>
+
+<h2>Voting activity:</h2>
+<div>
+{% for user in voter_activity %}
+    <h5>{{user.user}}:    {{user.num_votes}} votes</h5>
+{% endfor %}
+</div>
+
+<div id="bracket">
+
+</div>
+
+
+{% endblock %}

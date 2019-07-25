@@ -11,17 +11,17 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 login = LoginManager(app)
 VOTE_BATCH_SIZE = 10
-FINAL_WINNER = None
-NUM_WORDS = 0
-NUM_ROUNDS = 0
 
-from app.models import Word, Match
+from app.models import Word, Match, Vote
 from app import routes, models
 import random
+
 
 WORD_LIST = 'word-tournament.txt'
 TEST_DATA = ['apple', 'orange', 'blue', 'red', 'summer', 'winter', 'druid', 'wizard']
 
+
+# Read words from file into array
 def init_data(file_name):
     with open(file_name, 'r') as f:
         words = f.readlines()
@@ -29,12 +29,12 @@ def init_data(file_name):
     return words
 
 
+# Populate database with words and initial matches
 def init_matches(word_list):
-    L = word_list.copy()  # for non-destructive removal
-    while L:
-        pair = random.sample(L, k=2)
-        L.remove(pair[0])
-        L.remove(pair[1])
+    while word_list:  # removes words from array until empty
+        pair = random.sample(word_list, k=2)
+        word_list.remove(pair[0])
+        word_list.remove(pair[1])
 
         word_1 = Word(word=pair[0], matched=True)
         word_2 = Word(word=pair[1], matched=True)
@@ -45,13 +45,21 @@ def init_matches(word_list):
         db.session.add(match)
     db.session.commit()
 
-    global NUM_WORDS
-    global NUM_ROUNDS
-    NUM_WORDS = Word.query.count()
-    NUM_ROUNDS = int(math.log(NUM_WORDS, 2))
+
+def reset_db():
+    # User.query.delete()
+    Vote.query.delete()
+    Match.query.delete()
+    Word.query.delete()
+    db.session.commit()
+
+    # init_matches(init_data(WORD_LIST))  # use real data
+    init_matches(TEST_DATA)  # use test data
+
+
+# Modify above function to taste and uncomment this line to reset the database
+reset_db()
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=8000)
+    app.run(debug=True, host='127.0.0.1', port=5000)
 
-#init_matches(init_data(WORD_LIST))
-#init_matches(TEST_DATA)

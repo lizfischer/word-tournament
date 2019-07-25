@@ -1,5 +1,5 @@
 from flask import render_template, flash, redirect, url_for
-from app import app, db, VOTE_BATCH_SIZE, NUM_ROUNDS
+from app import app, db, VOTE_BATCH_SIZE
 from flask_login import current_user, login_user, logout_user
 from app.forms import LoginForm, RegistrationForm, VoteForm
 from app.models import User, Match, Vote, Word
@@ -8,6 +8,9 @@ from wtforms.validators import DataRequired
 import math
 
 FINAL_WINNER = None
+NUM_WORDS = Word.query.count()
+NUM_ROUNDS = int(math.log(NUM_WORDS, 2))
+
 
 @app.route('/')
 @app.route('/index')
@@ -63,18 +66,21 @@ def vote():
     if not current_user.is_authenticated:
         return redirect(url_for('login'))
 
+    # Check if the tournament is over
     global FINAL_WINNER
     if FINAL_WINNER is not None:
         flash('Voting is done! The winner is "' + FINAL_WINNER + '"', 'info')
-        return render_template('index.html')
+        return render_template('vote.html')
 
+    # Get matches for this user
     user_votes = [r for (r,) in Vote.query.with_entities(Vote.match).filter_by(user=current_user.id).all()]
     matches = Match.query.filter_by(finished=0).filter(Match.id.notin_(user_votes)).order_by(Match.round).limit(VOTE_BATCH_SIZE)
 
     if matches.count() < 1:
         flash('Nothing for you to vote on now. Try again later!', 'info')
-        return render_template('index.html')
+        return render_template('vote.html')
 
+    # Make voting form
     class F(VoteForm):  # subclass for dynamic form population
         pass
     for match in matches:
@@ -82,9 +88,10 @@ def vote():
                                              validators=[DataRequired()]))
     form = F()
 
+    # Process form input
     if form.validate_on_submit():
         for field in form:
-            if field.type == "RadioField":
+            if field.type == "RadioField":  # ignores initial hidden field & submit field
                 # Register vote
                 match_id = int(field.name)
                 chosen_word = field.data
@@ -122,10 +129,12 @@ def vote():
 
                     else:
                         winner.matched = False
+        # save your work!
         db.session.commit()
+        # send the user on their way
         return redirect(url_for('vote'))
 
-    return render_template('index.html', matches=matches, form=form)
+    return render_template('vote.html', matches=matches, form=form)
 
 
 @app.route('/myvotes')
@@ -141,44 +150,22 @@ def myvotes():
     return render_template('my-votes.html', votes=data, count=len(user_votes))
 
 
+# TOURNAMENT STATUS PAGE
 @app.route('/tournament')
 def tournament():
-    data = {}
-    starting_round = NUM_ROUNDS - 1
-    starting_match = Match.query.filter_by(round=starting_round).first()
-    tournament_recurse(data, starting_match, starting_round)
 
-    for i in range(0, NUM_ROUNDS):
-        # Add matches that didn't lead anywhere
-        whole_round = Match.query.filter_by(round=i).all()
-        for m in whole_round:
-            if m not in data[i]:
-                data[i].append(m)
+    # Get voting activity for all users, and put in an easier-to-read structure to send to the template
+    votes_query = db.engine.execute("SELECT User.username, count(*) as total FROM User INNER JOIN Vote ON Vote.user=User.id GROUP BY User.username")
+    voter_activity = [{"user": row[0], "num_votes": row[1]} for row in votes_query]
 
-        # add empties
-        num_full = len(data[i])
-        num_empty = 2**(NUM_ROUNDS - i - 1) - num_full
-        for x in range(0, num_empty):
-            data[i].append(None)
+    # Get match stats
+    finished_matches = Match.query.filter_by(finished=True).count()
+    open_matches = Match.query.filter_by(finished=False).count()
+    latest_pending_round = Match.query.filter_by(finished=True).order_by(Match.round.desc()).first().round + 1  # db.engine.execute("SELECT Match.round FROM Match ORDER BY round DESC LIMIT(1)")
+    earliest_pending_round = Match.query.filter_by(finished=False).order_by(Match.round).first().round + 1
 
-    return render_template('tournament.html', data=data)
-
-
-def tournament_recurse(data, match, round):
-    if not round in data:
-        data[round] = []
-    data[round].append(match)
-
-    # If the match was None, try all possible points in the next round
-    if not match:
-        new_starts = Match.query.filter_by(round=round-1).all()
-        for match in new_starts:
-            tournament_recurse(data, match, round-1)
-        return
-    if round > 0:  # if there is a previous round
-        words = [match.word_1, match.word_2]
-        for word in words:
-            prev_match = Match.query.filter_by(round=round-1).filter_by(winner=word).first()
-            tournament_recurse(data, prev_match, round-1)
-
-    return
+    # Send all this data to the template!
+    return render_template('tournament-status.html', voter_activity=voter_activity,
+                           finished_matches=finished_matches, open_matches=open_matches,
+                           latest_pending_round=latest_pending_round, earliest_pending_round=earliest_pending_round,
+                           total_rounds=NUM_ROUNDS)
